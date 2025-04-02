@@ -214,5 +214,5 @@ def stream_audio():
     return jsonify({"message": "Streaming not yet implemented"}), 501
 
 if __name__ == '__main__':
-    print("Starting mock API server on port 5001...")
-    app.run(debug=True, host='0.0.0.0', port=5001) 
+    print("Starting mock API server on port 5002...")
+    app.run(host='0.0.0.0', port=5002, debug=True) 
