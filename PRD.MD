@@ -1,124 +1,86 @@
-🧠 Summary of Functionalities for Your Stoic Mentor System (with CSM)
-1. Conversational Voice Interface
-Always-on voice listening with wake phrase or open-mic toggle.
+# 🧠 Summary of Functionalities for Your Stoic Mentor System (with CSM)
 
-Real-time speech-to-text (Whisper): Transcribes user's voice.
+## 1. Conversational Voice Interface
 
-Context-aware streaming response from GPT-4 (or Claude/Solar): Emulates Marcus Aurelius, Seneca, or Epictetus.
+- Always-on voice listening with wake phrase or open-mic toggle.
+- Real-time speech-to-text (Whisper): Transcribes user's voice.
+- Context-aware streaming response from GPT-4 (or Claude/Solar): Emulates Marcus Aurelius, Seneca, or Epictetus.
+- Streaming TTS response using ElevenLabs or Bark with natural, expressive voice synthesis.
+- Interrupt detection: User can speak over the AI to cut it off (mimics natural turn-taking).
 
-Streaming TTS response using ElevenLabs or Bark with natural, expressive voice synthesis.
+## 2. Mentor Personality System
 
-Interrupt detection: User can speak over the AI to cut it off (mimics natural turn-taking).
-
-2. Mentor Personality System
 Each mentor has:
 
-Unique system prompt/personality style
+- Unique system prompt/personality style
+- Custom voice profile (TTS voice ID)
+- Mentor-specific tone control (calm, motivational, challenging)
+- Future: dynamic emotion/mood adjustment (e.g., gentler if user is sad)
 
-Custom voice profile (TTS voice ID)
+## 3. Minimalist Interface Like Sesame Demo
 
-Mentor-specific tone control (calm, motivational, challenging)
-
-Future: dynamic emotion/mood adjustment (e.g., gentler if user is sad)
-
-3. Minimalist Interface Like Sesame Demo
 No chat bubbles, no keyboard unless requested.
 
 Simple UI showing:
 
-Mic level or waveform
+- Mic level or waveform
+- Current speaker (User / Mentor)
+- Option to switch mentors (Marcus / Seneca / Epictetus)
+- Controls: Start / Stop conversation, optionally Pause.
 
-Current speaker (User / Mentor)
+## 4. Real-Time Feedback Loop
 
-Option to switch mentors (Marcus / Seneca / Epictetus)
+- Streaming Whisper input
+- Streaming GPT response with async generator
+- Streaming TTS output with interrupt support
+- 200ms latency goal: parallelizing transcription → generation → speech
 
-Controls: Start / Stop conversation, optionally Pause.
+## 5. Session Memory
 
-4. Real-Time Feedback Loop
-Streaming Whisper input
+- Light memory in context window (e.g., last 3 exchanges)
+- Local conversation log (per mentor)
+- Option to mark reflections for journaling or later review
 
-Streaming GPT response with async generator
-
-Streaming TTS output with interrupt support
-
-200ms latency goal: parallelizing transcription → generation → speech
-
-5. Session Memory
-Light memory in context window (e.g., last 3 exchanges)
-
-Local conversation log (per mentor)
-
-Option to mark reflections for journaling or later review
-
-6. Stoic Practice Layer
+## 6. Stoic Practice Layer
 (Optional for V2 — but architect early)
 
 After or during conversations, mentors might suggest:
 
-Reflection prompts
+- Reflection prompts
+- Breathing techniques
+- Quotes to remember
+- Auto-tag journal entries based on themes/emotions
 
-Breathing techniques
+## 7. Local Dev & Backend Plan
 
-Quotes to remember
-
-Auto-tag journal entries based on themes/emotions
-
-7. Local Dev & Backend Plan
 For now: all runs locally on your machine
 
 Components:
 
-useMicStream (or vad): listens to audio
-
-startWhisperStream: transcribes
-
-startGPTStream: responds
-
-streamTTS: speaks
+- `useMicStream` (or vad): listens to audio
+- `startWhisperStream`: transcribes
+- `startGPTStream`: responds
+- `streamTTS`: speaks
 
 Future backend:
 
-Firebase or Supabase for saving sessions
+- Firebase or Supabase for saving sessions
+- DB model: user > mentor > session > message[]
 
-DB model: user > mentor > session > message[]
+## 8. Expandable Architecture
 
-8. Expandable Architecture
 CSM lets you easily:
 
-Swap STT, LLM, or TTS provider
+- Swap STT, LLM, or TTS provider
+- Plug in emotion detection
+- Add eye/contact detection (for mobile/AR later)
+- Run on-device (edge) with fast models
 
-Plug in emotion detection
+---
 
-Add eye/contact detection (for mobile/AR later)
+## 🧱 Project Directory Structure
 
-Run on-device (edge) with fast models
-
-Would you like me to now:
-
-Create a modular roadmap with priority features?
-
-Draft code structure to organize the system (components/hooks/services)?
-
-Add backend architecture for storing mentor conversations?
-
-Let me know where you’d like to go next.
-
-
-
-
-
-
-You said:
-Draft code structure to organize the system (components/hooks/services)
-
-
-ChatGPT said:
-Here's a clear and scalable code structure for your Stoic mentor system using the Sesame CSM, Whisper, OpenAI GPT, and streaming TTS. It emphasizes modularity, mentor personality management, and future extensibility:
-
-🧱 Project Directory Structure
-pgsql
-Copy
-Edit
+```
 /src
 ├── components/
 │   ├── UI/
@@ -161,28 +123,27 @@ Edit
 │   └── index.ts                      # Shared types/interfaces
 │
 └── csm/                              # Sesame CSM integration
-    ├── graph.ts                     # Conversation state machine logic
-    └── hooks.ts                     # CSM-powered React helpers
-💡 Key Concepts
-useMentorCallEngine.ts
+    ├── graph.ts                      # Conversation state machine logic
+    └── hooks.ts                      # CSM-powered React helpers
+```
+
+## 💡 Key Concepts
+
+### useMentorCallEngine.ts
+
 Central orchestrator:
 
-Handles mic input → Whisper
+- Handles mic input → Whisper
+- Feeds into GPT stream (based on selected mentor's prompt)
+- Sends TTS chunks
+- Switches between speaking/listening states
+- Integrates CSM transitions
 
-Feeds into GPT stream (based on selected mentor's prompt)
+### services/mentors.ts
 
-Sends TTS chunks
-
-Switches between speaking/listening states
-
-Integrates CSM transitions
-
-services/mentors.ts
 Encodes Stoic mentor personalities:
 
-ts
-Copy
-Edit
+```typescript
 export const mentors = {
   marcus: {
     name: 'Marcus Aurelius',
@@ -203,21 +164,21 @@ export const mentors = {
     style: 'firm'
   }
 };
-components/core/MentorCallUI.tsx
+```
+
+### components/core/MentorCallUI.tsx
+
 Main interactive conversation interface:
 
-Big mic button (start/stop)
+- Big mic button (start/stop)
+- Visual feedback (waveform, transcription)
+- Optional log pane (transcript + mentor response)
 
-Visual feedback (waveform, transcription)
+### state/sessionStore.ts
 
-Optional log pane (transcript + mentor response)
-
-state/sessionStore.ts
 Session memory state:
 
-ts
-Copy
-Edit
+```typescript
 interface Message {
   role: 'user' | 'mentor';
   content: string;
@@ -230,9 +191,10 @@ interface SessionState {
   isSpeaking: boolean;
   isListening: boolean;
 }
-✅ Optional Modules (Future)
-/tasks/stoicPractices.ts – Assign suggested Stoic reflections
+```
 
-/api/feedback.ts – Send logs or feedback to backend
+## ✅ Optional Modules (Future)
 
-/mobile/ – Build React Native interface using same logic
+- `/tasks/stoicPractices.ts` – Assign suggested Stoic reflections
+- `/api/feedback.ts` – Send logs or feedback to backend
+- `/mobile/` – Build React Native interface using same logic

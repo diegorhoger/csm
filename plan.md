@@ -1,179 +1,166 @@
-// =======================================
-// VITA AI – Implementation Roadmap 🧠✨
-// Project Scope: Stoic Mentor Voice Companion
-// Platforms: Web (React), Mobile (React Native / Expo)
-// Goal: Seamless, human-like real-time AI mentorship
-// =======================================
+# VITA AI – Implementation Roadmap 🧠✨
 
-// ------------------------------
-// 🔹 PHASE 1: FOUNDATION
-// ------------------------------
+**Project Scope:** Stoic Mentor Voice Companion  
+**Platforms:** Web (React), Mobile (React Native / Expo)  
+**Goal:** Seamless, human-like real-time AI mentorship
 
-// ✅ Setup monorepo with Turborepo or Nx
-// 🔲 Setup CI/CD for web (Vercel) and mobile (Expo)
-// ✅ Configure TypeScript, ESLint, Prettier
-// ✅ Setup folder structure: /components, /hooks, /services, /utils
-// ✅ Setup GitHub project board + issues
-// 🔲 Setup environment variables & API keys management
-// 🔲 Create mock services for local development
+## 🔹 PHASE 1: FOUNDATION
 
-// ------------------------------
-// 🔹 PHASE 2: UI/UX & COMPONENTS
-// ------------------------------
+- ✅ Setup monorepo with Turborepo or Nx
+- 🔲 Setup CI/CD for web (Vercel) and mobile (Expo)
+- ✅ Configure TypeScript, ESLint, Prettier
+- ✅ Setup folder structure: /components, /hooks, /services, /utils
+- ✅ Setup GitHub project board + issues
+- ✅ Setup environment variables & API keys management
+- ✅ Create mock services for local development
 
-// ✅ VoiceButton.tsx – tap to speak / stop
-// ✅ MentorSelector.tsx – choose Marcus, Seneca, Epictetus
-// ✅ TranscriptBox.tsx – live display of user text
-// 🔲 AnimatedAvatar.tsx – optional visual feedback
-// ✅ Minimalist UX based on Sesame.ai design
-// 🔲 Add dark/light theme support
-// ✅ Implement error boundary components
-// 🔲 Add accessibility features (ARIA, keyboard navigation)
-// 🔲 Create user onboarding/tutorial components
+## 🔹 PHASE 2: UI/UX & COMPONENTS
 
-// ------------------------------
-// 🔹 PHASE 3: AUDIO / STREAMING
-// ------------------------------
+- ✅ VoiceButton.tsx – tap to speak / stop
+- ✅ MentorSelector.tsx – choose Marcus, Seneca, Epictetus
+- ✅ TranscriptBox.tsx – live display of user text
+- 🔲 AnimatedAvatar.tsx – optional visual feedback
+- ✅ Minimalist UX based on Sesame.ai design
+- 🔲 Add dark/light theme support
+- ✅ Implement error boundary components
+- 🔲 Add accessibility features (ARIA, keyboard navigation)
+- 🔲 Create user onboarding/tutorial components
 
-// ✅ useMicStream.ts – mic input as stream
-// ✅ services/whisperService.ts – OpenAI Whisper integration
-// ✅ services/openaiService.ts – GPT stream with systemPrompt
-// ✅ services/ttsService.ts – ElevenLabs voice stream
-// ✅ hooks/useMentorCallEngine.ts – glue logic
-// 🔲 Add fallback for no-mic/browser support
-// 🔲 Implement audio buffering strategy for low latency
-// 🔲 Add offline fallback mechanisms
-// 🔲 Create browser compatibility detection
+## 🔹 PHASE 3: AUDIO / STREAMING
 
-// ------------------------------
-// 🔹 PHASE 4: MENTOR SYSTEM
-// ------------------------------
+- ✅ useMicStream.ts – mic input as stream
+- ✅ services/whisperService.ts – OpenAI Whisper integration
+- ✅ services/openaiService.ts – GPT stream with systemPrompt
+- ✅ services/ttsService.ts – ElevenLabs voice stream
+- ✅ hooks/useMentorCallEngine.ts – glue logic
+- ✅ Add fallback for no-mic/browser support
+- 🔲 Implement audio buffering strategy for low latency
+- 🔲 Add offline fallback mechanisms
+- ✅ Create browser compatibility detection
 
-// ✅ mentors.ts – Marcus, Seneca, Epictetus profile
-// ✅ systemPrompt tuned per voice/style
-// 🔲 Add Claude / Gemini model option
-// 🔲 Add profile: Aurelia (female stoic voice)
+## 🔹 PHASE 4: MENTOR SYSTEM
 
-// ------------------------------
-// 🔹 PHASE 5: STATE & STORAGE
-// ------------------------------
+- ✅ mentors.ts – Marcus, Seneca, Epictetus profile
+- ✅ systemPrompt tuned per voice/style
+- 🔲 Add Claude / Gemini model option
+- 🔲 Add profile: Aurelia (female stoic voice)
 
-// ✅ store/mentors.ts – selected mentor state
-// 🔲 store/history.ts – log of previous calls
-// 🔲 LocalStorage or SQLite persistence layer
-// 🔲 Supabase / Firebase integration (sync)
-// 🔲 Implement conversation history display component
+## 🔹 PHASE 5: STATE & STORAGE
 
-// ------------------------------
-// 🔹 PHASE 6: MOBILE ADAPTATION
-// ------------------------------
+- ✅ store/mentors.ts – selected mentor state
+- 🔲 store/history.ts – log of previous calls
+- 🔲 LocalStorage or SQLite persistence layer
+- 🔲 Supabase / Firebase integration (sync)
+- 🔲 Implement conversation history display component
 
-// 🔲 Configure mic permissions (iOS + Android)
-// 🔲 Expo background audio / stop listener
-// 🔲 React Native waveform visual
-// 🔲 Mobile navigation + session list view
+## 🔹 PHASE 6: MOBILE ADAPTATION
 
-// ------------------------------
-// 🔹 PHASE 7: PERFORMANCE
-// ------------------------------
+- 🔲 Configure mic permissions (iOS + Android)
+- 🔲 Expo background audio / stop listener
+- 🔲 React Native waveform visual
+- 🔲 Mobile navigation + session list view
 
-// 🔲 Sub-200ms TTS latency buffer (chunked)
-// 🔲 Preload voices + warm GPT stream
-// 🔲 Silence detector: `utils/vad.ts`
-// 🔲 Cache audio / resume partial replies
-// 🔲 Implement progressive loading strategies
+## 🔹 PHASE 7: PERFORMANCE
 
-// ------------------------------
-// 🔹 PHASE 8: TESTING & QA
-// ------------------------------
+- 🔲 Sub-200ms TTS latency buffer (chunked)
+- 🔲 Preload voices + warm GPT stream
+- 🔲 Silence detector: `utils/vad.ts`
+- 🔲 Cache audio / resume partial replies
+- 🔲 Implement progressive loading strategies
 
-// 🔲 unit tests: `useMentorCallEngine.test.ts`
-// 🔲 e2e tests: `playwright.config.ts` (web), Detox (mobile)
-// 🔲 stress test GPT + TTS pipelines
-// 🔲 test iOS Safari / Android Chrome mic behavior
-// 🔲 Cross-browser compatibility testing
-// 🔲 Performance benchmarking tools
+## 🔹 PHASE 8: TESTING & QA
 
-// ------------------------------
-// 🔹 PHASE 9: DEPLOYMENT
-// ------------------------------
+- 🔲 unit tests: `useMentorCallEngine.test.ts`
+- 🔲 e2e tests: `playwright.config.ts` (web), Detox (mobile)
+- ✅ stress test GPT + TTS pipelines
+- 🔲 test iOS Safari / Android Chrome mic behavior
+- 🔲 Cross-browser compatibility testing
+- 🔲 Performance benchmarking tools
 
-// 🔲 Deploy web to Vercel
-// 🔲 Expo build to TestFlight / Google Beta
-// 🔲 Add monitoring: LogRocket, Sentry, Supabase Logs
-// 🔲 Enable Stripe if monetization planned
-// 🔲 Setup content delivery network (CDN) for audio assets
+## 🔹 PHASE 9: DEPLOYMENT
 
-// ------------------------------
-// 🔹 PHASE 10: POST-LAUNCH & ADD-ONS
-// ------------------------------
+- 🔲 Deploy web to Vercel
+- 🔲 Expo build to TestFlight / Google Beta
+- 🔲 Add monitoring: LogRocket, Sentry, Supabase Logs
+- 🔲 Enable Stripe if monetization planned
+- 🔲 Setup content delivery network (CDN) for audio assets
 
-// 🔲 Add journaling/log to GPT output
-// 🔲 Daily Stoic challenges
-// 🔲 Emotion tracking + sentiment
-// 🔲 "Interrupt-to-ask" inside TTS playback
-// 🔲 Community & content system (MML Ethos Room)
-// 🔲 Implement usage analytics dashboard
+## 🔹 PHASE 10: POST-LAUNCH & ADD-ONS
 
-// ------------------------------
-// 🔹 Bonus Tools
-// ------------------------------
+- 🔲 Add journaling/log to GPT output
+- 🔲 Daily Stoic challenges
+- 🔲 Emotion tracking + sentiment
+- 🔲 "Interrupt-to-ask" inside TTS playback
+- 🔲 Community & content system (MML Ethos Room)
+- 🔲 Implement usage analytics dashboard
 
-// ✅ /utils/debug.ts – verbose error tracking
-// ✅ /constants/audioThresholds.ts
-// ✅ /types/mentor.ts
-// ✅ /components/ErrorBoundary.tsx – graceful error handling
-// 🔲 /utils/browserDetection.ts – feature detection utilities
+## 🔹 Bonus Tools
 
-// =======================================
-// END CHECKLIST — LAST UPDATED: 2025-04-02
-// =======================================
+- ✅ /utils/debug.ts – verbose error tracking
+- ✅ /constants/audioThresholds.ts
+- ✅ /types/mentor.ts
+- ✅ /components/ErrorBoundary.tsx – graceful error handling
+- ✅ /utils/browserDetection.ts – feature detection utilities
 
-// ------------------------------
-// 🔹 CURRENT PROGRESS SUMMARY
-// ------------------------------
-// We have successfully set up:
-// 
-// 1. Core infrastructure with React and TypeScript
-// 2. Basic UI components:
-//    - TranscriptBox component for displaying conversation
-//    - MentorSwitcher for selecting between stoic mentors
-//    - WaveformVisualizer for audio feedback
-//    - VoiceButton for intuitive recording interaction
-//    - ConversationUI that combines these components
-// 3. Audio handling:
-//    - useMicStream hook for microphone input and recording
-//    - Microphone permissions management
-//    - Audio level visualization
-// 4. Backend integration:
-//    - Flask API with endpoints for:
-//      - /api/health (health check)
-//      - /api/mentors (mentor profiles)
-//      - /api/tts (text-to-speech using CSM model)
-//      - /api/transcribe (transcription stub)
-//    - CSM (Conversational Speech Model) integration for audio generation
-// 5. State management with Zustand for conversational state
-// 6. Service layer with:
-//    - whisperService for transcription
-//    - ttsService for speech generation
-//    - mentorService for mentor data
-//    - openaiService for GPT integration with both direct and backend options
-// 7. Complete conversation flow with useMentorCallEngine:
-//    - Integration of mic input, transcription, LLM response, and TTS
-//    - Support for interruptions and conversation history
-//    - Error handling and state management
-// 
-// The complete conversation flow is now operational, with:
-// - Voice input and transcription
-// - GPT-based mentor responses with proper context
-// - Speech synthesis for responses
-// - Support for interrupting the mentor while speaking
-// - Improved user interface with VoiceButton for intuitive recording controls
-// 
-// Next steps will focus on:
-// 1. Implementing voice activity detection (VAD) for better user experience
-// 2. Adding browser compatibility detection and fallbacks
-// 3. Optimizing audio buffering for lower latency responses
-// 4. Adding conversation history storage and persistence
-// 5. Creating AnimatedAvatar component for visual feedback
+---
+
+**LAST UPDATED:** 2025-04-02
+
+## 🔹 CURRENT PROGRESS SUMMARY
+
+We have successfully set up:
+
+1. Core infrastructure with React and TypeScript
+2. Basic UI components:
+   - TranscriptBox component for displaying conversation
+   - MentorSwitcher for selecting between stoic mentors
+   - WaveformVisualizer for audio feedback
+   - VoiceButton for intuitive recording interaction
+   - ConversationUI that combines these components
+3. Audio handling:
+   - useMicStream hook for microphone input and recording
+   - Microphone permissions management
+   - Audio level visualization
+4. Backend integration:
+   - Flask API with endpoints for:
+     - /api/health (health check)
+     - /api/mentors (mentor profiles)
+     - /api/tts (text-to-speech using CSM model)
+     - /api/transcribe (transcription stub)
+   - CSM (Conversational Speech Model) integration for audio generation
+   - Mock implementations for development without model dependencies
+5. State management with Zustand for conversational state
+6. Service layer with:
+   - whisperService for transcription
+   - ttsService for speech generation
+   - mentorService for mentor data
+   - openaiService for GPT integration with both direct and backend options
+7. Complete conversation flow with useMentorCallEngine:
+   - Integration of mic input, transcription, LLM response, and TTS
+   - Support for interruptions and conversation history
+   - Error handling and state management
+8. Documentation and tooling:
+   - Markdown files properly formatted
+   - Configuration files for linting and TypeScript
+   - Environment variables management
+   - Proper code organization following architecture guidelines
+
+The complete conversation flow is now operational, with:
+- Voice input and transcription
+- GPT-based mentor responses with proper context
+- Speech synthesis for responses
+- Support for interrupting the mentor while speaking
+- Improved user interface with VoiceButton for intuitive recording controls
+- Fallback mechanisms for browser compatibility
+
+## 🔹 NEXT STEPS (PRIORITY ORDER)
+
+1. Improve TTS latency with audio buffering strategies
+2. Implement conversation history persistence (LocalStorage)
+3. Create AnimatedAvatar component for visual feedback
+4. Add voice activity detection (VAD) for better user experience
+5. Implement dark/light theme toggle
+6. Create user onboarding tutorial experience
+7. Add integration tests for core functionality
+8. Prepare web deployment to Vercel
 
