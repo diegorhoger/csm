@@ -1,0 +1,57 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'stoic-mentor/backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'stoic-mentor/backend/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'stoic-mentor/backend/requirements.txt'
+      
+      - name: Install dependencies
+        run: |
+          cd stoic-mentor/backend
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
+      
+      - name: Run tests
+        run: |
+          cd stoic-mentor/backend
+          pytest
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      # This is a placeholder for a real deployment step
+      # You would typically deploy the backend to a service like Vercel Functions,
+      # AWS Lambda, Heroku, or another platform of your choice
+      - name: Deploy to backend service
+        run: |
+          echo "Deploying backend service..."
+          # Add your actual deployment commands here based on your hosting provider
+          # For example, using Vercel CLI for serverless functions
+          # vercel --prod --token ${{ secrets.VERCEL_TOKEN }} 
