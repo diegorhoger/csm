@@ -21,7 +21,7 @@
 // 🔹 PHASE 2: UI/UX & COMPONENTS
 // ------------------------------
 
-// 🔲 VoiceButton.tsx – tap to speak / stop
+// ✅ VoiceButton.tsx – tap to speak / stop
 // ✅ MentorSelector.tsx – choose Marcus, Seneca, Epictetus
 // ✅ TranscriptBox.tsx – live display of user text
 // 🔲 AnimatedAvatar.tsx – optional visual feedback
@@ -139,6 +139,7 @@
 //    - TranscriptBox component for displaying conversation
 //    - MentorSwitcher for selecting between stoic mentors
 //    - WaveformVisualizer for audio feedback
+//    - VoiceButton for intuitive recording interaction
 //    - ConversationUI that combines these components
 // 3. Audio handling:
 //    - useMicStream hook for microphone input and recording
@@ -167,11 +168,12 @@
 // - GPT-based mentor responses with proper context
 // - Speech synthesis for responses
 // - Support for interrupting the mentor while speaking
+// - Improved user interface with VoiceButton for intuitive recording controls
 // 
 // Next steps will focus on:
-// 1. Creating a VoiceButton component for better UI interaction
-// 2. Implementing voice activity detection (VAD) for better user experience
-// 3. Adding browser compatibility detection and fallbacks
-// 4. Optimizing audio buffering for lower latency responses
-// 5. Adding conversation history storage and persistence
+// 1. Implementing voice activity detection (VAD) for better user experience
+// 2. Adding browser compatibility detection and fallbacks
+// 3. Optimizing audio buffering for lower latency responses
+// 4. Adding conversation history storage and persistence
+// 5. Creating AnimatedAvatar component for visual feedback
 
