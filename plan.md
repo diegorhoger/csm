@@ -1,266 +1,132 @@
-# VITA AI – Implementation Roadmap 🧠✨
+# Stoic Mentor Implementation Plan
 
-**Project Scope:** Stoic Mentor Voice Companion  
-**Platforms:** Web (React), Mobile (React Native / Expo)  
-**Goal:** Seamless, human-like real-time AI mentorship
+## Project Overview
+Stoic Mentor is a voice-based AI companion that provides philosophical guidance in the style of famous Stoic philosophers. The application enables natural, human-like conversations with different mentors through voice input/output.
 
-## 🔹 PHASE 1: FOUNDATION
+## Core Components (Completed)
+- ✅ React/TypeScript project setup with Vite
+- ✅ Component architecture and state management
+- ✅ Basic UI/UX implementation
+- ✅ Audio recording and playback system
+- ✅ WebSocket-based Voice Activity Detection (VAD)
+- ✅ OpenAI integration for transcription and responses
+- ✅ Initial text-to-speech implementation
 
-- ✅ Setup monorepo with Turborepo or Nx
-- ✅ Setup CI/CD for web (Vercel) and mobile (Expo)
-- ✅ Configure TypeScript, ESLint, Prettier
-- ✅ Setup folder structure: /components, /hooks, /services, /utils
-- ✅ Setup GitHub project board + issues
-- ✅ Setup environment variables & API keys management
-- ✅ Create mock services for local development
+## Priority 1: Mentor Voice System Enhancement
+- 🔲 Implement voice preloading to reduce initial latency
+- 🔲 Create voice profiles for each mentor with consistent parameters
+- 🔲 Optimize TTS latency to sub-200ms response time
+- 🔲 Add audio caching for frequently used phrases
+- 🔲 Implement progressive loading of audio chunks
 
-## 🔹 PHASE 2: UI/UX & COMPONENTS
+## Priority 2: Conversation Intelligence
+- 🔲 Enhance mentor profiles with deeper philosophical nuance
+- 🔲 Implement context awareness between conversation sessions
+- 🔲 Develop interruption handling for more natural conversations
+- 🔲 Create personalized user models based on past interactions
 
-- ✅ VoiceButton.tsx – tap to speak / stop
-- ✅ MentorSelector.tsx – choose Marcus, Seneca, Epictetus
-- ✅ TranscriptBox.tsx – live display of user text
-- 🔲 AnimatedAvatar.tsx – optional visual feedback
-- ✅ Minimalist UX based on Sesame.ai design
-- 🔲 Add dark/light theme support
-- ✅ Implement error boundary components
-- 🔲 Add accessibility features (ARIA, keyboard navigation)
-- 🔲 Create user onboarding/tutorial components
+## Priority 3: Audio Processing Refinements
+- 🔲 Enhance WebSocket VAD with ML-based detection
+- 🔲 Add spectral analysis for better noise/speech differentiation
+- 🔲 Implement frequency band filtering for human voice isolation
+- 🔲 Create environment classification for adaptive processing
 
-## 🔹 PHASE 3: AUDIO / STREAMING
+## Priority 4: UI/UX Improvements
+- 🔲 Create AnimatedAvatar component with emotional states
+- 🔲 Implement dark/light theme support
+- 🔲 Add conversation history timeline
+- 🔲 Develop user onboarding tutorial
 
-- ✅ useMicStream.ts – mic input as stream
-- ✅ services/whisperService.ts – OpenAI Whisper integration
-- ✅ services/openaiService.ts – GPT stream with systemPrompt
-- ✅ services/ttsService.ts – ElevenLabs voice stream
-- ✅ hooks/useMentorCallEngine.ts – glue logic
-- ✅ Add fallback for no-mic/browser support
-- 🔲 Implement audio buffering strategy for low latency
-- 🔲 Add offline fallback mechanisms
-- ✅ Create browser compatibility detection
+## Priority 5: Additional Features
+- 🔲 Implement localStorage for conversation persistence
+- 🔲 Add journaling functionality to track insights
+- 🔲 Create daily Stoic challenges system
+- 🔲 Develop emotion tracking with sentiment analysis
 
-## 🔹 PHASE 4: MENTOR SYSTEM
+## Technical Implementation Details
 
-- ✅ mentors.ts – Marcus, Seneca, Epictetus profile
-- ✅ systemPrompt tuned per voice/style
-- 🔲 Add Claude / Gemini model option
-- 🔲 Add profile: Aurelia (female stoic voice)
+### Voice System Enhancement
+1. **Voice Preloading**
+   - Implement a cache system for ElevenLabs voices
+   - Preload introductory phrases and common responses
+   - Develop a background loading queue for anticipated responses
 
-## 🔹 PHASE 5: STATE & STORAGE
+2. **Low-Latency Response Pipeline**
+   - Implement streaming TTS with chunked responses
+   - Optimize backend processing with parallel operations
+   - Create fallback rapid response system for immediate feedback
 
-- ✅ store/mentors.ts – selected mentor state
-- 🔲 store/history.ts – log of previous calls
-- 🔲 LocalStorage or SQLite persistence layer
-- 🔲 Supabase / Firebase integration (sync)
-- 🔲 Implement conversation history display component
+3. **Voice Consistency System**
+   - Define specific ElevenLabs parameters for each mentor
+   - Create standardized emotion modulations per philosopher
+   - Implement voice style persistence across sessions
 
-## 🔹 PHASE 6: MOBILE ADAPTATION
+### Conversation Flow Optimization
+1. **Enhanced Interruption Handling**
+   - Develop graceful conversation pausing
+   - Implement context retention when interrupted
+   - Create natural transition phrases when resuming
 
-- 🔲 Configure mic permissions (iOS + Android)
-- 🔲 Expo background audio / stop listener
-- 🔲 React Native waveform visual
-- 🔲 Mobile navigation + session list view
+2. **Context Preservation**
+   - Store conversation history with metadata
+   - Implement meaning extraction for key discussion points
+   - Develop context weighting for more relevant responses
 
-## 🔹 PHASE 7: PERFORMANCE
+## Testing Strategy
+1. **Speech Detection Testing**
+   - Benchmark VAD accuracy across different environments
+   - Test with various accents and speech patterns
+   - Measure false positive/negative rates
 
-- 🔲 Sub-200ms TTS latency buffer (chunked)
-- 🔲 Preload voices + warm GPT stream
-- 🔲 Silence detector: `utils/vad.ts`
-- 🔲 Cache audio / resume partial replies
-- 🔲 Implement progressive loading strategies
+2. **TTS Quality Testing**
+   - Evaluate voice naturalness and consistency
+   - Measure response latency under different conditions
+   - Test emotional appropriateness of responses
 
-## 🔹 PHASE 8: TESTING & QA
+## Deployment Timeline
+1. **Phase 1: Voice System Enhancement** (2 weeks)
+   - Complete voice preloading and caching
+   - Implement low-latency response pipeline
+   - Optimize mentor voice consistency
 
-- 🔲 unit tests: `useMentorCallEngine.test.ts`
-- 🔲 e2e tests: `playwright.config.ts` (web), Detox (mobile)
-- ✅ stress test GPT + TTS pipelines
-- 🔲 test iOS Safari / Android Chrome mic behavior
-- 🔲 Cross-browser compatibility testing
-- 🔲 Performance benchmarking tools
+2. **Phase 2: Conversation Intelligence** (3 weeks)
+   - Enhance mentor philosophical profiles
+   - Implement improved context awareness
+   - Develop better interruption handling
 
-## 🔹 PHASE 9: DEPLOYMENT
+3. **Phase 3: UI/UX Improvements** (2 weeks)
+   - Create visual feedback components
+   - Implement theme support
+   - Develop conversation history visualization
 
-- 🔲 Deploy web to Vercel
-- 🔲 Expo build to TestFlight / Google Beta
-- 🔲 Add monitoring: LogRocket, Sentry, Supabase Logs
-- 🔲 Enable Stripe if monetization planned
-- 🔲 Setup content delivery network (CDN) for audio assets
+4. **Phase 4: Mobile Adaptation** (3 weeks)
+   - Configure mic permissions for iOS and Android
+   - Implement Expo background audio handling
+   - Create mobile-specific UI components
+   - Test performance on various mobile devices
 
-## 🔹 PHASE 10: POST-LAUNCH & ADD-ONS
+## Implementation Approach
 
-- 🔲 Add journaling/log to GPT output
-- 🔲 Daily Stoic challenges
-- 🔲 Emotion tracking + sentiment
-- 🔲 "Interrupt-to-ask" inside TTS playback
-- 🔲 Community & content system (MML Ethos Room)
-- 🔲 Implement usage analytics dashboard
+### Voice System Priority Tasks
+1. **Immediate Focus: TTS Latency Reduction**
+   - Profile current TTS pipeline to identify bottlenecks
+   - Implement chunked audio streaming from TTS service
+   - Create audio buffer management for seamless playback
+   - Develop parallel processing for TTS and response generation
 
-## 🔹 Bonus Tools
+2. **Voice Profile Enhancement**
+   - Select optimal ElevenLabs voice models for each philosopher
+   - Create consistent parameter profiles (stability, clarity, etc.)
+   - Implement voice character stylization per mentor
+   - Test voice recognition among users for distinctiveness
 
-- ✅ /utils/debug.ts – verbose error tracking
-- ✅ /constants/audioThresholds.ts
-- ✅ /types/mentor.ts
-- ✅ /components/ErrorBoundary.tsx – graceful error handling
-- ✅ /utils/browserDetection.ts – feature detection utilities
+3. **Audio Cache System**
+   - Design cache storage structure for audio chunks
+   - Implement TTL (time-to-live) for cached audio
+   - Create preemptive caching for frequently used phrases
+   - Develop audio compression for efficient storage
 
----
+## Progress Tracking
+We'll use GitHub issues and project boards to track implementation progress, with weekly reviews to adjust priorities based on development velocity and user feedback.
 
-**LAST UPDATED:** 2023-04-02
-
-## 🔹 CURRENT PROGRESS SUMMARY
-
-We have successfully implemented:
-
-1. Core infrastructure with React and TypeScript
-   - Vite build system with proper configuration
-   - TypeScript with strong typing throughout the codebase
-   - Tailwind CSS for styling with proper configuration
-   - Environment variable management
-
-2. Basic UI components:
-   - TranscriptBox component for displaying conversation
-   - MentorSwitcher for selecting between stoic mentors
-   - WaveformVisualizer for audio feedback
-   - VoiceButton for intuitive recording interaction
-   - ConversationUI that combines these components
-   - AppLayout for consistent UI structure
-
-3. Audio handling:
-   - useMicStream hook for microphone input and recording
-   - Microphone permissions management
-   - Audio level visualization
-   - Streaming audio processing
-
-4. Backend integration:
-   - Flask API with endpoints for:
-     - /api/health (health check)
-     - /api/mentors (mentor profiles)
-     - /api/tts (text-to-speech using mock generator)
-     - /api/transcribe (transcription)
-     - /api/gpt (mentor responses)
-   - Mock implementation for development without model dependencies
-   - OpenAI integration for authentic stoic responses
-
-5. State management with Zustand for conversational state
-
-6. Service layer with:
-   - whisperService for transcription
-   - ttsService for speech generation
-   - mentorService for mentor data
-   - openaiService for GPT integration
-   - api.ts for backend communication
-
-7. Complete conversation flow with useMentorCallEngine:
-   - Integration of mic input, transcription, LLM response, and TTS
-   - Support for interruptions and conversation history
-   - Error handling and state management
-
-8. Documentation:
-   - Comprehensive DOCUMENTATION.md with technical decisions
-   - Architecture guidelines in ARCHITECTURE.md
-   - README.md with setup instructions
-   - Inline code comments
-
-## 🔹 IMPLEMENTATION CHANGES
-
-1. **Backend Approach:**
-   - Original plan assumed edge-first computation
-   - Implemented a Flask backend with REST API instead
-   - Allows for easier development and testing cycle
-
-2. **Speech Model:**
-   - Original plan used CSM (Conversational Speech Model)
-   - Implemented mock TTS with fallback options instead
-   - Created a simplified API that mimics the original functionality
-
-3. **Storage Strategy:**
-   - Original plan included Firebase/Supabase integration
-   - Current implementation is entirely local-first
-   - Simplified for initial version while maintaining expansion possibilities
-
-4. **Mentor Personalities:**
-   - Enhanced with detailed prompts and improved conversation context
-   - Added dedicated mentor prompt system for authentic voices
-   - Implemented improved sanitization of responses
-
-5. **Project Structure:**
-   - Consolidated into a single source directory in stoic-mentor/src
-   - Added backend directory for API services
-   - Improved organization following component-based architecture
-
-## 🔹 NEXT STEPS (PRIORITY ORDER)
-
-1. **Implement Voice Activity Detection (VAD):**
-   - Create useVoiceActivityDetection hook
-   - Add silence detection to automatically stop recording
-   - Integrate with useMicStream and conversation flow
-
-2. **Add Conversation History Persistence:**
-   - Implement localStorage for session continuity
-   - Create UI for viewing past conversations
-   - Add export/import functionality
-
-3. **Improve TTS Latency:**
-   - Implement audio buffering strategies
-   - Work toward 200ms latency goal
-   - Add preloading for mentor voices
-
-4. **Add Mobile Responsiveness:**
-   - Ensure UI works well on mobile devices
-   - Add touch-specific interactions
-   - Test on various screen sizes
-
-5. **Create AnimatedAvatar Component:**
-   - Provide visual feedback for mentor speaking
-   - Add subtle animations for different emotional states
-   - Ensure it's lightweight and optimized for performance
-
-6. **Implement Wake Word Detection:**
-   - Create useWakeWord hook (optional activation)
-   - Test with various wake phrases
-   - Ensure low false positive rate
-
-7. **Add Testing Infrastructure:**
-   - Unit tests for core hooks and services
-   - Integration tests for conversation flow
-   - End-to-end testing for complete user journey
-
-8. **Prepare for Deployment:**
-   - Setup CI/CD for reliable deployments
-   - Configure web deployment to Vercel
-   - Set up proper environment variables for production
-
-## 🔹 FUTURE ENHANCEMENTS
-
-1. **Stoic Practice Layer:**
-   - Implement reflection prompts and exercises
-   - Add breathing technique guidance
-   - Create quote recommendation system
-   - Build journaling integration
-
-2. **Enhanced Mentor Personalities:**
-   - Add Aurelia (female stoic voice)
-   - Consider additional philosophical mentors
-   - Improve emotional resonance in responses
-
-3. **Multi-language Support:**
-   - Add support for languages beyond English
-   - Translate mentor prompts and UI elements
-
-4. **Offline Mode:**
-   - Implement local fallbacks when API is unavailable
-   - Cache common responses for better performance
-
-5. **Accessibility Improvements:**
-   - Add keyboard navigation throughout the app
-   - Implement proper screen reader support
-   - Provide alternative interaction methods
-
-6. **User Preferences & Customization:**
-   - Allow customization of response length and style
-   - Save favorite mentors and conversations
-   - Adjust audio and visual settings
-
-7. **Analytics & Progress Tracking:**
-   - Track stoic practice completion
-   - Show user growth and engagement over time
-   - Add optional gamification elements
+**Last Updated: 2024-07-19**
