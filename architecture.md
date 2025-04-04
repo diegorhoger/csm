@@ -102,3 +102,30 @@ Or for a modular helper:
 ```
 "Create a service that handles GPT streaming with a given system prompt and a user message. Return an async generator of tokens."
 ```
+
+## Consolidated Architecture
+
+The project has been updated to a consolidated architecture:
+
+```
+CSM/
+├── backend/               # Consolidated backend API
+│   ├── api.py             # Main Flask/SocketIO API
+│   ├── audio_analysis_service.py  # Audio analysis for VAD 
+│   ├── socket_vad_service.py      # WebSocket VAD service
+│   ├── requirements.txt   # Backend dependencies
+│   └── README.md          # Backend documentation
+│
+└── stoic-mentor/          # Frontend application
+    ├── src/               # React/Vue.js source code
+    ├── public/            # Static assets
+    └── ...                # Other frontend files
+```
+
+The backend has been consolidated to include all functionality in a single API:
+
+1. **Voice Activity Detection (VAD)**: Detects when a user is speaking via audio analysis
+2. **WebSocket Communication**: Real-time bidirectional communication
+3. **OpenAI Integration**: Text generation, text-to-speech, and transcription capabilities
+
+The frontend connects to the backend via HTTP APIs and WebSockets to provide a seamless user experience.

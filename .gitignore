@@ -20,27 +20,30 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Environment
 .env
 .venv
 env/
 venv/
 ENV/
 
-# IDE
+# IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Project specific
-.python-version
-*.wav
-output_*/
-basic_audio.wav
-full_conversation.wav
-context_audio.wav
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Model files
-*.pt
-*.ckpt
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log 
