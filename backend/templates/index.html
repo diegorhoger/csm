@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend API Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    button {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 0;
+    }
+    button:hover {
+      background: #357ab8;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      max-height: 300px;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .input-group {
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+    input {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-right: 10px;
+    }
+    .socket-status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #999;
+      margin-right: 5px;
+    }
+    .socket-status.connected {
+      background-color: #4CAF50;
+    }
+    .socket-status.disconnected {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <h1>Backend API Test</h1>
+  <p>This page allows you to test various backend API endpoints.</p>
+
+  <div class="test-section">
+    <h2>Health Check</h2>
+    <button id="healthCheck">Test Health Endpoint</button>
+    <div id="healthResult"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Available Mentors</h2>
+    <button id="getMentors">Get Mentors</button>
+    <div id="mentorsResult"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Chat with Mentor</h2>
+    <div class="input-group">
+      <label for="mentorId">Mentor ID:</label>
+      <select id="mentorId">
+        <option value="marcus">Marcus Aurelius</option>
+        <option value="seneca">Seneca</option>
+        <option value="epictetus">Epictetus</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label for="userMessage">Message:</label>
+      <textarea id="userMessage" rows="3">How can I practice Stoicism in my daily life?</textarea>
+    </div>
+    <button id="sendMessage">Send Message</button>
+    <h3>Response:</h3>
+    <pre id="chatResult">Response will appear here...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>Socket.IO Connection Test</h2>
+    <div>
+      <span class="socket-status" id="socketStatus"></span>
+      <span id="socketStatusText">Disconnected</span>
+    </div>
+    <button id="connectSocket">Connect to Socket.IO</button>
+    <button id="disconnectSocket" disabled>Disconnect</button>
+    <div id="socketLog">
+      <h3>Event Log:</h3>
+      <pre id="socketEvents">Socket events will appear here...</pre>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Audio Transcription Test</h2>
+    <button id="startRecording">Start Recording</button>
+    <button id="stopRecording" disabled>Stop Recording</button>
+    <div id="recordingStatus">Not recording</div>
+    <div id="audioControls" style="display:none">
+      <h3>Recorded Audio:</h3>
+      <audio id="recordedAudio" controls></audio>
+      <button id="transcribeAudio">Transcribe Audio</button>
+    </div>
+    <h3>Transcription Result:</h3>
+    <pre id="transcriptionResult">Transcription will appear here...</pre>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const API_BASE_URL = 'http://localhost:5001';
+    let socket = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioBlob = null;
+
+    // Health check endpoint
+    document.getElementById('healthCheck').addEventListener('click', async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/health`);
+        const data = await response.json();
+        document.getElementById('healthResult').innerHTML = `
+          <p>Status: ${data.status}</p>
+          <p>Timestamp: ${new Date(data.timestamp * 1000).toLocaleString()}</p>
+        `;
+      } catch (error) {
+        document.getElementById('healthResult').innerHTML = `<p style="color: red">Error: ${error.message}</p>`;
+      }
+    });
+
+    // Get mentors endpoint
+    document.getElementById('getMentors').addEventListener('click', async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/mentors`);
+        const mentors = await response.json();
+        
+        document.getElementById('mentorsResult').innerHTML = `
+          <p>Found ${mentors.length} mentors:</p>
+          <pre>${JSON.stringify(mentors, null, 2)}</pre>
+        `;
+      } catch (error) {
+        document.getElementById('mentorsResult').innerHTML = `<p style="color: red">Error: ${error.message}</p>`;
+      }
+    });
+
+    // Send message to mentor
+    document.getElementById('sendMessage').addEventListener('click', async () => {
+      const mentorId = document.getElementById('mentorId').value;
+      const message = document.getElementById('userMessage').value;
+      
+      if (!message.trim()) {
+        alert('Please enter a message');
+        return;
+      }
+      
+      try {
+        document.getElementById('chatResult').innerText = 'Sending message...';
+        
+        const response = await fetch(`${API_BASE_URL}/api/mentor-chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: `You are ${mentorId === 'marcus' ? 'Marcus Aurelius' : 
+                          mentorId === 'seneca' ? 'Seneca' : 'Epictetus'}, 
+                         a Stoic philosopher. Answer as if you were giving advice based on 
+                         Stoic principles. Be thoughtful, wise, and practical.`
+              },
+              {
+                role: 'user',
+                content: message
+              }
+            ],
+            model: 'gpt-4o',
+            temperature: 0.7,
+            max_tokens: 500
+          })
+        });
+        
+        const result = await response.json();
+        document.getElementById('chatResult').innerText = result.content;
+      } catch (error) {
+        document.getElementById('chatResult').innerText = `Error: ${error.message}`;
+      }
+    });
+
+    // Socket.IO connection test
+    document.getElementById('connectSocket').addEventListener('click', () => {
+      if (socket) {
+        appendSocketEvent('Socket already connected');
+        return;
+      }
+      
+      try {
+        socket = io(API_BASE_URL, {
+          transports: ['websocket', 'polling'],
+          path: '/socket.io/'
+        });
+        
+        socket.on('connect', () => {
+          document.getElementById('socketStatus').classList.add('connected');
+          document.getElementById('socketStatus').classList.remove('disconnected');
+          document.getElementById('socketStatusText').innerText = `Connected (${socket.id})`;
+          document.getElementById('connectSocket').disabled = true;
+          document.getElementById('disconnectSocket').disabled = false;
+          appendSocketEvent('Connected to server');
+        });
+        
+        socket.on('disconnect', (reason) => {
+          document.getElementById('socketStatus').classList.remove('connected');
+          document.getElementById('socketStatus').classList.add('disconnected');
+          document.getElementById('socketStatusText').innerText = 'Disconnected';
+          document.getElementById('connectSocket').disabled = false;
+          document.getElementById('disconnectSocket').disabled = true;
+          appendSocketEvent(`Disconnected: ${reason}`);
+        });
+        
+        socket.on('connected', (data) => {
+          appendSocketEvent(`Received 'connected' event: ${JSON.stringify(data)}`);
+        });
+        
+        socket.on('error', (error) => {
+          appendSocketEvent(`Error: ${JSON.stringify(error)}`);
+        });
+        
+        socket.on('connect_error', (error) => {
+          appendSocketEvent(`Connection error: ${error.message}`);
+          document.getElementById('socketStatus').classList.remove('connected');
+          document.getElementById('socketStatus').classList.add('disconnected');
+        });
+        
+        appendSocketEvent('Connecting to Socket.IO...');
+      } catch (error) {
+        appendSocketEvent(`Error creating socket: ${error.message}`);
+      }
+    });
+    
+    document.getElementById('disconnectSocket').addEventListener('click', () => {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+        appendSocketEvent('Manually disconnected');
+      }
+    });
+    
+    function appendSocketEvent(message) {
+      const events = document.getElementById('socketEvents');
+      const timestamp = new Date().toLocaleTimeString();
+      events.innerText = `[${timestamp}] ${message}\n${events.innerText}`;
+    }
+
+    // Audio recording and transcription
+    document.getElementById('startRecording').addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRecorder.addEventListener('dataavailable', event => {
+          audioChunks.push(event.data);
+        });
+        
+        mediaRecorder.addEventListener('stop', () => {
+          audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          document.getElementById('recordedAudio').src = audioUrl;
+          document.getElementById('audioControls').style.display = 'block';
+          document.getElementById('recordingStatus').innerText = 'Recording stopped';
+          document.getElementById('startRecording').disabled = false;
+          document.getElementById('stopRecording').disabled = true;
+        });
+        
+        mediaRecorder.start();
+        document.getElementById('recordingStatus').innerText = 'Recording...';
+        document.getElementById('startRecording').disabled = true;
+        document.getElementById('stopRecording').disabled = false;
+      } catch (error) {
+        document.getElementById('recordingStatus').innerText = `Error: ${error.message}`;
+      }
+    });
+    
+    document.getElementById('stopRecording').addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+    });
+    
+    document.getElementById('transcribeAudio').addEventListener('click', async () => {
+      if (!audioBlob) {
+        alert('No audio recorded');
+        return;
+      }
+      
+      try {
+        document.getElementById('transcriptionResult').innerText = 'Transcribing...';
+        
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        
+        const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        
+        const result = await response.json();
+        document.getElementById('transcriptionResult').innerText = result.text || 'No transcription returned';
+      } catch (error) {
+        document.getElementById('transcriptionResult').innerText = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html> 

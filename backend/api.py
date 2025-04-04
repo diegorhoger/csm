@@ -8,7 +8,7 @@ import uuid
 import numpy as np
 import threading
 from pathlib import Path
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response, stream_with_context
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, disconnect
 from werkzeug.utils import secure_filename
@@ -37,7 +37,7 @@ app = Flask(__name__)
 # Global configuration
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 TEMP_DIR = tempfile.gettempdir()
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:5001")
 
 # Enable CORS for development and production
 CORS(app, resources={r"/*": {"origins": CORS_ORIGINS.split(",")}}, supports_credentials=True)
@@ -70,10 +70,14 @@ print(f"🔄 Using SocketIO async mode: {async_mode}")
 
 socketio = SocketIO(
     app, 
-    cors_allowed_origins=CORS_ORIGINS.split(","), 
+    cors_allowed_origins="*",  # Allow all origins temporarily to debug the issue
     async_mode=async_mode,
     logger=DEBUG,
-    engineio_logger=DEBUG
+    engineio_logger=DEBUG,
+    ping_timeout=60,
+    ping_interval=25,
+    max_http_buffer_size=1024 * 1024,  # 1MB buffer size
+    websocket_ping_timeout=55  # Websocket specific ping timeout
 )
 
 # Helper function for logging
@@ -89,6 +93,31 @@ def handle_connect():
     log(f"New client connected: {request.sid}")
     log(f"Connection details: Origin: {request.origin}")
     emit('connected', {'status': 'connected', 'sid': request.sid})
+
+@socketio.on('debug_connection')
+def handle_debug_connection(data=None):
+    """Debug connection issues."""
+    try:
+        log(f"Debug connection request received from {request.sid}")
+        
+        # Get client-side debugging info
+        client_info = data or {}
+        log(f"Client debugging info: {client_info}")
+        
+        # Send back server-side information about the connection
+        emit('debug_response', {
+            'server_time': int(time.time() * 1000),
+            'sid': request.sid,
+            'origin': request.origin,
+            'transport': request.args.get('transport', 'unknown'),
+            'async_mode': async_mode,
+            'active_sessions': len(active_sessions)
+        })
+        
+    except Exception as e:
+        log(f"Error in debug endpoint: {str(e)}")
+        log(traceback.format_exc())
+        emit('error', {'message': f"Debug error: {str(e)}"})
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -109,6 +138,9 @@ def handle_disconnect():
 
 # Track active sessions
 active_sessions = {}
+
+# Track conversation history
+conversation_histories = {}
 
 @socketio.on('init_vad')
 def handle_init_vad(data=None):
@@ -287,6 +319,12 @@ def handle_get_debug_state(data):
         log(traceback.format_exc())
         emit('error', {'message': f"Failed to get debug state: {str(e)}"})
 
+# Serve test HTML page
+@app.route('/test')
+def test_page():
+    """Serve a test page for API testing."""
+    return app.send_static_file('index.html')
+
 # Basic API routes
 @app.route('/', methods=['GET'])
 def root():
@@ -312,38 +350,147 @@ def health_check():
 # AI endpoints (OpenAI integration)
 @app.route('/api/mentors', methods=['GET'])
 def get_mentors():
-    """Get available mentors/assistants."""
-    # This is a placeholder that can be expanded based on your mentor system
+    """Get available mentors."""
     mentors = [
         {
-            'id': 'stoic',
-            'name': 'Stoic Mentor',
-            'description': 'A mentor grounded in stoic philosophy',
-            'icon': '🧠',
-            'system_prompt': 'You are a stoic mentor, offering guidance based on stoic philosophy.'
+            "id": "marcus",
+            "name": "Marcus Aurelius",
+            "style": "calm",
+            "title": "Philosopher and Roman Emperor",
+            "years": "121-180 CE",
+            "image": "./images/marcus.png",
+            "description": "Known for his personal reflections in \"Meditations\", Marcus Aurelius ruled as Roman Emperor while practicing Stoic philosophy.",
+            "voiceId": "0",
+            "voice": os.getenv("TTS_VOICE_MARCUS", "onyx")
         },
         {
-            'id': 'coach',
-            'name': 'Life Coach',
-            'description': 'A supportive life coach to help you achieve your goals',
-            'icon': '⭐',
-            'system_prompt': 'You are a supportive life coach, helping the user achieve their personal goals.'
+            "id": "seneca",
+            "name": "Seneca",
+            "style": "motivational",
+            "title": "Philosopher and Statesman",
+            "years": "4 BCE-65 CE",
+            "image": "./images/seneca.png",
+            "description": "A Roman Stoic philosopher who served as advisor to Emperor Nero and wrote influential letters on ethics and natural philosophy.",
+            "voiceId": "1",
+            "voice": os.getenv("TTS_VOICE_SENECA", "echo")
+        },
+        {
+            "id": "epictetus",
+            "name": "Epictetus",
+            "style": "firm",
+            "title": "Stoic Philosopher and Former Slave",
+            "years": "50-135 CE",
+            "image": "./images/epictetus.png",
+            "description": "Born a slave and later freed, Epictetus taught that philosophy is a way of life, not just an intellectual exercise.",
+            "voiceId": "2",
+            "voice": os.getenv("TTS_VOICE_EPICTETUS", "ash")
         }
     ]
-    
-    return jsonify({'mentors': mentors})
+    return jsonify(mentors)
+
+@app.route('/api/mentor-chat', methods=['POST'])
+def mentor_chat():
+    """Chat with a mentor using OpenAI."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        conversation_id = data.get('conversation_id', str(uuid.uuid4()))
+        messages = data.get('messages', [])
+        stream = data.get('stream', False)
+        model = data.get('model', 'gpt-4o')
+        temperature = data.get('temperature', 0.7)
+        max_tokens = data.get('max_tokens', 1000)
+        
+        # Check if messages is empty or not provided
+        if not messages:
+            return jsonify({'error': 'No messages provided'}), 400
+            
+        # Check if OpenAI is available
+        if 'openai' not in globals() or not openai.api_key:
+            return jsonify({'error': 'OpenAI API not configured'}), 500
+            
+        # Log the request
+        log(f"Mentor chat request: {len(messages)} messages, model={model}, temp={temperature}, stream={stream}")
+        
+        # Update conversation history
+        if conversation_id not in conversation_histories:
+            conversation_histories[conversation_id] = []
+            
+        # Add new messages to history
+        conversation_histories[conversation_id].extend(messages)
+        
+        # Trim history if it gets too long (keep last 20 messages)
+        if len(conversation_histories[conversation_id]) > 20:
+            conversation_histories[conversation_id] = conversation_histories[conversation_id][-20:]
+            
+        # If streaming is requested, use SSE for streaming response
+        if stream:
+            def generate():
+                try:
+                    response = openai.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        stream=True
+                    )
+                    
+                    for chunk in response:
+                        content = chunk.choices[0].delta.content
+                        if content:
+                            yield f"data: {json.dumps({'content': content})}\n\n"
+                            
+                    yield f"data: {json.dumps({'done': True})}\n\n"
+                    
+                except Exception as e:
+                    log(f"Error in streaming mentor chat: {e}")
+                    yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                    
+            return Response(stream_with_context(generate()), content_type='text/event-stream')
+            
+        # For non-streaming responses, return the complete response
+        response = openai.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        
+        response_message = response.choices[0].message.content
+        log(f"Mentor response: '{response_message[:30]}...'")
+        
+        # Add response to conversation history
+        conversation_histories[conversation_id].append({
+            "role": "assistant",
+            "content": response_message
+        })
+        
+        return jsonify({
+            'content': response_message,
+            'conversation_id': conversation_id
+        })
+        
+    except Exception as e:
+        log(f"Error in mentor chat: {e}")
+        log(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/tts', methods=['POST'])
 def text_to_speech():
     """Convert text to speech using OpenAI's TTS API."""
     try:
         data = request.json
-        if not data or 'text' not in data:
-            return jsonify({'error': 'Missing text parameter'}), 400
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
             
-        text = data['text']
-        voice = data.get('voice', 'alloy')  # Default voice
+        text = data.get('text')
+        voice = data.get('voice', 'onyx')  # Use 'onyx' as the default voice
         
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
         # Check if OpenAI is available
         if 'openai' not in globals() or not openai.api_key:
             return jsonify({'error': 'OpenAI API not configured'}), 500
@@ -354,26 +501,27 @@ def text_to_speech():
         response = openai.audio.speech.create(
             model="tts-1",
             voice=voice,
-            input=text
+            input=text,
+            speed=data.get('speed', 1.0)
         )
         
-        # Save to a temporary file
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-        temp_path = temp_file.name
+        # Save audio to temporary file
+        temp_file = f"tts_{str(uuid.uuid4())}.mp3"
+        temp_path = os.path.join(TEMP_DIR, temp_file)
         
-        # Get the binary content and save it
-        response.stream_to_file(temp_path)
-        
+        with open(temp_path, 'wb') as f:
+            response.stream_to_file(temp_path)
+            
         log(f"TTS audio generated: {temp_path}")
         
-        # Return the audio file
+        # Send the file
         return send_file(
             temp_path,
             mimetype='audio/mpeg',
             as_attachment=True,
             download_name='speech.mp3'
         )
-        
+            
     except Exception as e:
         log(f"Error in TTS: {e}")
         log(traceback.format_exc())
@@ -383,44 +531,64 @@ def text_to_speech():
 def transcribe():
     """Transcribe audio using OpenAI's Whisper API."""
     try:
-        # Check if a file was uploaded
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
+        log("Transcribe endpoint called")
+        
+        # Debug request details
+        log(f"Request files: {list(request.files.keys())}")
+        log(f"Request headers: {dict(request.headers)}")
+        
+        # Check if file was uploaded
+        if 'audio' not in request.files and 'file' not in request.files:
+            log("Error: No audio file provided in request")
+            return jsonify({'error': 'No audio file provided'}), 400
             
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'Empty file name'}), 400
+        # Get the file from either 'audio' or 'file' field
+        file = request.files.get('audio') or request.files.get('file')
+        if not file:
+            log("Error: File object is None")
+            return jsonify({'error': 'File object is None'}), 400
             
+        filename = secure_filename(file.filename)
+        log(f"Processing file: {filename}")
+        
         # Check if OpenAI is available
         if 'openai' not in globals() or not openai.api_key:
+            log("Error: OpenAI API not configured")
             return jsonify({'error': 'OpenAI API not configured'}), 500
             
-        # Save to a temporary file
-        filename = secure_filename(file.filename)
+        # Save file to temporary directory
         temp_path = os.path.join(TEMP_DIR, f"transcribe_{filename}")
         file.save(temp_path)
         
-        log(f"Transcribing audio file: {temp_path}")
+        log(f"Transcribing audio: {temp_path}, file size: {os.path.getsize(temp_path)} bytes")
         
         # Transcribe the audio
-        with open(temp_path, "rb") as audio_file:
-            transcript = openai.audio.transcriptions.create(
-                model="whisper-1", 
-                file=audio_file
-            )
+        try:
+            with open(temp_path, "rb") as audio_file:
+                transcript = openai.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language=request.form.get('language', None),
+                    prompt=request.form.get('prompt', None)
+                )
+                
+            log(f"Transcription result: {transcript.text[:100]}...")
+        except Exception as e:
+            log(f"OpenAI transcription error: {str(e)}")
+            log(traceback.format_exc())
+            return jsonify({'error': f"OpenAI transcription error: {str(e)}"}), 500
         
-        # Clean up the temporary file
-        os.unlink(temp_path)
-        
-        log(f"Transcription complete: '{transcript.text[:30]}...'")
-        
+        # Clean up
+        try:
+            os.remove(temp_path)
+            log(f"Cleaned up temporary file: {temp_path}")
+        except Exception as cleanup_error:
+            log(f"Warning: Could not clean up temp file: {str(cleanup_error)}")
+            
         return jsonify({
-            'text': transcript.text,
-            'language': 'en',  # Whisper API doesn't return language info directly
-            'duration_seconds': 0,  # Placeholder, would need to analyze audio
-            'timestamp': int(time.time())
+            'text': transcript.text
         })
-        
+            
     except Exception as e:
         log(f"Error in transcription: {e}")
         log(traceback.format_exc())
@@ -431,30 +599,27 @@ def gpt():
     """Generate a response using OpenAI's API."""
     try:
         data = request.json
-        if not data or 'messages' not in data:
-            return jsonify({'error': 'Missing messages parameter'}), 400
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
             
-        messages = data['messages']
+        messages = data.get('messages', [])
         model = data.get('model', 'gpt-3.5-turbo')
         temperature = data.get('temperature', 0.7)
-        max_tokens = data.get('max_tokens', 500)
+        max_tokens = data.get('max_tokens', 1000)
         
         # Check if OpenAI is available
         if 'openai' not in globals() or not openai.api_key:
             return jsonify({'error': 'OpenAI API not configured'}), 500
             
-        mentor_id = data.get('mentor_id')
-        if mentor_id:
-            # If a mentor is specified, get the system prompt
-            system_prompt = create_system_prompt(mentor_id)
+        # Check if messages is empty or not provided
+        if not messages:
+            return jsonify({'error': 'No messages provided'}), 400
             
-            # Add system message if not already present
-            if messages and messages[0].get('role') != 'system':
-                messages.insert(0, {
-                    'role': 'system',
-                    'content': system_prompt
-                })
-        
+        # For older format support
+        if isinstance(messages, str):
+            # Convert string to a user message
+            messages = [{"role": "user", "content": messages}]
+            
         log(f"GPT request: {len(messages)} messages, model={model}, temp={temperature}")
         
         # Generate response
@@ -466,45 +631,16 @@ def gpt():
         )
         
         response_message = response.choices[0].message.content
-        
         log(f"GPT response: '{response_message[:30]}...'")
         
         return jsonify({
-            'response': response_message,
-            'full_response': {
-                'id': response.id,
-                'model': response.model,
-                'usage': {
-                    'prompt_tokens': response.usage.prompt_tokens,
-                    'completion_tokens': response.usage.completion_tokens,
-                    'total_tokens': response.usage.total_tokens
-                },
-                'timestamp': int(time.time())
-            }
+            'content': response_message
         })
         
     except Exception as e:
         log(f"Error in GPT: {e}")
         log(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
-
-def create_system_prompt(mentor_id):
-    """Create a system prompt based on mentor ID."""
-    base_prompts = {
-        'stoic': """You are a wise stoic mentor, offering guidance grounded in stoic philosophy.
-Your responses should be calm, thoughtful, and focused on what is within one's control.
-Emphasize the importance of virtue, rationality, and acceptance of what cannot be changed.
-Quote stoic philosophers like Epictetus, Seneca, and Marcus Aurelius when appropriate.
-Your goal is to help the person become more resilient, rational, and at peace with the world.""",
-
-        'coach': """You are a supportive life coach, helping the user achieve their personal goals.
-Your responses should be encouraging, practical, and action-oriented.
-Focus on breaking down challenges into manageable steps and celebrating progress.
-Ask clarifying questions when needed to better understand the user's situation.
-Your goal is to empower the person to take positive action and build effective habits."""
-    }
-    
-    return base_prompts.get(mentor_id, "You are a helpful AI assistant.")
 
 # Audio analysis endpoints - legacy support
 @app.route('/api/audio-analysis', methods=['OPTIONS'])
