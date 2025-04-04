@@ -1,21 +1,170 @@
-# Development Ruleset for Stoic Voice Mentor App
+# System Architecture: Stoic Voice Mentor App
 
 ## 📦 Code Organization
 
-Follow this directory structure:
+```
+Project Root/
+├── backend/
+│   ├── api.py                # Main Flask/SocketIO API
+│   ├── audio_analysis_service.py  # Audio analysis for VAD 
+│   ├── socket_vad_service.py      # WebSocket VAD service
+│   ├── static/               # Static assets and test files
+│   ├── requirements.txt      # Backend dependencies
+│   └── README.md             # Backend documentation
+│
+└── stoic-mentor/            # Frontend application
+    ├── src/
+    │   ├── components/       # UI components (reusable, composable)
+    │   ├── hooks/            # Custom React hooks
+    │   ├── services/         # API wrappers, models, TTS, Whisper, etc.
+    │   ├── state/            # Global state stores
+    │   ├── pages/            # Entry points per route
+    │   ├── csm/              # Conversation State Machine logic (Sesame)
+    │   ├── types/            # Shared types & interfaces
+    │   ├── constants/        # App-wide configuration
+    │   └── utils/            # Small reusable helpers
+    ├── public/               # Static assets
+    └── ...                   # Other frontend files
+```
 
-```
-src/
-├── components/        // UI components (reusable, composable)
-├── hooks/             // Custom React hooks
-├── services/          // API wrappers, models, TTS, Whisper, etc.
-├── state/             // Global state stores
-├── pages/             // Entry points per route
-├── csm/               // Conversation State Machine logic (Sesame)
-├── types/             // Shared types & interfaces
-├── constants/         // App-wide configuration
-└── utils/             // Small reusable helpers
-```
+## 🎯 Architecture Overview
+
+The system follows a clear client-server architecture:
+
+1. **Backend** (Flask/SocketIO)
+   - Handles all OpenAI API interactions (GPT, Whisper)
+   - Provides WebSocket-based Voice Activity Detection
+   - Serves API endpoints for mentor chat, transcription, etc.
+   - Manages conversation sessions and state
+
+2. **Frontend** (React/TypeScript)
+   - Manages user interface and interactions
+   - Handles audio recording and processing
+   - Communicates with backend via REST APIs and WebSockets
+   - Manages local state and conversation flow
+
+## 🔄 Communication Flow
+
+1. **Voice Input Flow**
+   - User speaks → Browser records audio
+   - Audio chunks sent to WebSocket VAD service
+   - VAD detects speech start/end
+   - Complete audio recording sent to backend transcription endpoint
+   - Transcribed text displayed to user
+
+2. **AI Response Flow**
+   - Transcribed text sent to mentor chat endpoint
+   - Backend calls OpenAI API with appropriate mentor context
+   - Response streamed back to frontend
+   - Frontend displays and plays back response
+
+3. **WebSocket Communication**
+   - Real-time voice activity detection
+   - Connection status monitoring
+   - Session management
+   - Diagnostics and debugging
+
+## 🧠 Core Hooks and Services
+
+### Backend Services
+- **API Layer** (`api.py`): Main Flask application with REST endpoints
+- **Socket VAD Service** (`socket_vad_service.py`): WebSocket-based Voice Activity Detection
+- **Audio Analysis** (`audio_analysis_service.py`): Audio processing and analysis
+
+### Frontend Hooks
+- **useMentorCallEngine**: Orchestrates the entire conversation flow
+- **useMicStream**: Manages microphone access and audio recording
+- **useSocketVad**: Connects to WebSocket VAD service for speech detection
+- **useVoiceActivityDetection**: Coordinates voice activity state
+
+### Frontend Services
+- **mentorService.ts**: Handles backend API communication for mentor interactions
+- **socketVadService.ts**: Manages WebSocket connection and events
+- **openaiService.ts**: Utilities for OpenAI API integration (mostly deprecated in favor of backend)
+- **ttsService.ts**: Manages text-to-speech playback
+
+## 🔐 Security Considerations
+
+1. **API Key Management**
+   - All API keys stored securely on backend
+   - No keys exposed to frontend
+   - Usage monitoring and rate limiting
+
+2. **Data Privacy**
+   - Minimal audio storage (temporary files only)
+   - No persistent storage of conversations without consent
+   - Clear permissions model for microphone access
+
+3. **Network Security**
+   - CORS restrictions properly configured
+   - WebSocket secure connection options
+   - Input validation on all API endpoints
+
+## 🔍 Diagnostic Tools
+
+1. **WebSocket Test Page**
+   - Available at `/test` endpoint
+   - Tests WebSocket connections
+   - Tests API endpoints
+   - Tests audio recording and transcription
+
+2. **Logging System**
+   - Comprehensive logging in both frontend and backend
+   - WebSocket connection diagnostics
+   - Audio processing metrics
+   - API call tracing
+
+## 🚀 Performance Considerations
+
+1. **WebSocket Optimization**
+   - Efficient binary data transfer
+   - Proper error handling and reconnection
+   - Configurable VAD sensitivity
+
+2. **Audio Processing**
+   - Efficient audio blob handling
+   - Format conversion as needed
+   - Retry mechanisms for transcription
+
+3. **Response Streaming**
+   - Real-time streaming of API responses
+   - Progressive rendering of mentor replies
+   - Low-latency playback
+
+## 📈 Scalability Design
+
+The system is designed to scale through:
+
+1. **Stateless API Design**
+   - Each request contains necessary context
+   - Sessions managed via identifiers
+   - Minimal server-side state
+
+2. **Efficient Resource Usage**
+   - Audio processing optimized for size and quality
+   - WebSocket connections properly closed when inactive
+   - Temporary files cleaned up promptly
+
+3. **Modular Architecture**
+   - Clear separation between components
+   - Well-defined interfaces
+   - Isolated responsibilities
+
+## 🧪 Testing Approach
+
+1. **Unit Testing**
+   - Individual services and hooks tested in isolation
+   - Mock implementations for external dependencies
+
+2. **Integration Testing**
+   - API endpoint tests
+   - WebSocket communication tests
+   - Full conversation flow tests
+
+3. **Manual Testing**
+   - Test page for direct API interaction
+   - Real-world testing with actual speech input
+   - Cross-browser compatibility testing
 
 ## 🎯 Design Principles
 
