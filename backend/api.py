@@ -768,6 +768,45 @@ def handle_socket_io_options():
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
     return response
 
+@app.route('/api/vad/stats', methods=['GET'])
+def get_vad_stats():
+    """Get stats about the VAD systems for comparison."""
+    try:
+        # Get all active session stats
+        session_stats = []
+        for session_id, session in socket_vad_service.sessions.items():
+            session_stats.append(session.get_debug_state())
+        
+        # Aggregate stats
+        total_frames = sum(s['total_frames'] for s in session_stats)
+        speech_frames = sum(s['speech_frames'] for s in session_stats)
+        
+        # Get Silero VAD stats from a dummy session if no active sessions
+        silero_stats = {}
+        if not session_stats:
+            from silero_vad_service import SileroVADService
+            silero_vad = SileroVADService()
+            silero_stats = silero_vad.get_stats()
+        else:
+            # Use stats from the first session that has Silero VAD enabled
+            for s in session_stats:
+                if 'silero_vad' in s and s['silero_vad']:
+                    silero_stats = s['silero_vad']
+                    break
+        
+        return jsonify({
+            'active_sessions': len(session_stats),
+            'total_frames_processed': total_frames,
+            'speech_frames_detected': speech_frames,
+            'speech_ratio': speech_frames / max(1, total_frames),
+            'silero_vad': silero_stats
+        })
+        
+    except Exception as e:
+        log(f"Error getting VAD stats: {e}")
+        log(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     host = os.environ.get('HOST', '0.0.0.0')

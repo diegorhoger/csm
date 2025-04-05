@@ -15,6 +15,8 @@ import uuid
 from typing import Dict, Any, Optional, List, Tuple
 from audio_analysis_service import AudioAnalysisService, AudioAnalysisEvent
 from dataclasses import dataclass
+# Import Silero VAD service
+from silero_vad_service import SileroVADService
 
 # Default configuration
 DEFAULT_SOCKET_VAD_CONFIG = {
@@ -23,8 +25,10 @@ DEFAULT_SOCKET_VAD_CONFIG = {
     'aggressiveness': 2,  # WebRTC VAD aggressiveness (0-3)
     'use_webrtc_vad': True,
     'use_rms_vad': True,
-    'webrtc_weight': 0.7,  # Weight for WebRTC VAD result in ensemble
-    'rms_weight': 0.3,  # Weight for RMS VAD result in ensemble
+    'use_silero_vad': True,  # Enable Silero VAD by default
+    'webrtc_weight': 0.4,  # Weight for WebRTC VAD result in ensemble
+    'rms_weight': 0.2,  # Weight for RMS VAD result in ensemble
+    'silero_weight': 0.4,  # Weight for Silero VAD result in ensemble
     'session_timeout_ms': 300000,  # 5 minutes
     'buffer_size': 1024,  # Buffer size for audio processing
     'debug': False
@@ -38,6 +42,7 @@ class AudioFrame:
     timestamp: int
     is_speech_rms: bool = False
     is_speech_webrtc: bool = False
+    is_speech_silero: bool = False  # Added Silero speech detection
     is_speech_ensemble: bool = False
 
 class UserSession:
@@ -68,6 +73,14 @@ class UserSession:
         if self.config['use_webrtc_vad']:
             self.webrtc_vad = webrtcvad.Vad(self.config['aggressiveness'])
         
+        # Silero VAD if enabled
+        self.silero_vad = None
+        if self.config['use_silero_vad']:
+            self.silero_vad = SileroVADService({
+                'debug': self.config['debug'],
+                'sample_rate': self.config['sample_rate']
+            })
+        
         # Session state
         self.is_speaking = False
         self.speech_start_time = 0
@@ -88,6 +101,8 @@ class UserSession:
         if self.config['debug']:
             print(f"[UserSession] Created new session {session_id}")
             print(f"[UserSession] Frame size: {self.frame_size} bytes")
+            if self.silero_vad:
+                print(f"[UserSession] Silero VAD enabled")
     
     def is_expired(self) -> bool:
         """Check if this session has expired based on inactivity."""
@@ -193,17 +208,44 @@ class UserSession:
                 if self.config['debug']:
                     print(f"[UserSession] WebRTC VAD error: {e}")
         
-        # Combine results if using both methods
+        # Process with Silero VAD if enabled
+        is_speech_silero = False
+        silero_confidence = 0.0
+        if self.silero_vad and len(frame_data) == self.frame_size:
+            try:
+                silero_result = self.silero_vad.process_audio(frame_data)
+                is_speech_silero = silero_result['is_speech']
+                silero_confidence = silero_result.get('confidence', 0.0)
+            except Exception as e:
+                if self.config['debug']:
+                    print(f"[UserSession] Silero VAD error: {e}")
+        
+        # Combine results from all methods
         is_speech_ensemble = False
-        if self.config['use_webrtc_vad'] and self.config['use_rms_vad']:
-            ensemble_score = (
-                (is_speech_webrtc * self.config['webrtc_weight']) + 
-                (is_speech_rms * self.config['rms_weight'])
-            )
+        ensemble_score = 0.0
+        
+        # Set up weights based on which VADs are enabled
+        total_weight = 0
+        weighted_sum = 0
+        
+        if self.config['use_rms_vad']:
+            weighted_sum += is_speech_rms * self.config['rms_weight']
+            total_weight += self.config['rms_weight']
+            
+        if self.config['use_webrtc_vad']:
+            weighted_sum += is_speech_webrtc * self.config['webrtc_weight']
+            total_weight += self.config['webrtc_weight']
+            
+        if self.config['use_silero_vad']:
+            weighted_sum += is_speech_silero * self.config['silero_weight']
+            total_weight += self.config['silero_weight']
+        
+        # Calculate ensemble score if any VAD is enabled
+        if total_weight > 0:
+            ensemble_score = weighted_sum / total_weight
             is_speech_ensemble = ensemble_score > 0.5
-        elif self.config['use_webrtc_vad']:
-            is_speech_ensemble = is_speech_webrtc
         else:
+            # Fallback to RMS if no VAD is enabled
             is_speech_ensemble = is_speech_rms
         
         # Store frame info for debugging
@@ -213,6 +255,7 @@ class UserSession:
             timestamp=timestamp,
             is_speech_rms=is_speech_rms,
             is_speech_webrtc=is_speech_webrtc,
+            is_speech_silero=is_speech_silero,
             is_speech_ensemble=is_speech_ensemble
         )
         
@@ -228,7 +271,10 @@ class UserSession:
             "rms_level": rms_level,
             "is_speech_rms": is_speech_rms,
             "is_speech_webrtc": is_speech_webrtc,
+            "is_speech_silero": is_speech_silero,
+            "silero_confidence": silero_confidence,
             "is_speech": is_speech_ensemble,
+            "ensemble_score": ensemble_score,
             "timestamp": timestamp
         }
     
@@ -250,6 +296,12 @@ class UserSession:
             if 'aggressiveness' in config and self.config['use_webrtc_vad']:
                 self.webrtc_vad = webrtcvad.Vad(self.config['aggressiveness'])
                 
+            # Update Silero VAD if sample rate changed
+            if 'sample_rate' in config and self.config['use_silero_vad']:
+                self.silero_vad.update_config({
+                    'sample_rate': config['sample_rate']
+                })
+                
             # Apply audio service config changes
             audio_service_config = {}
             if 'initial_sensitivity_factor' in config:
@@ -267,6 +319,11 @@ class UserSession:
         """Get debug state information."""
         audio_debug = self.audio_service.get_debug_state() or {}
         
+        # Get Silero VAD stats if available
+        silero_stats = {}
+        if self.silero_vad:
+            silero_stats = self.silero_vad.get_stats()
+        
         # Return session state and audio analysis state
         return {
             "session_id": self.session_id,
@@ -283,12 +340,14 @@ class UserSession:
                     "rms_level": f.rms_level,
                     "is_speech_rms": f.is_speech_rms,
                     "is_speech_webrtc": f.is_speech_webrtc,
+                    "is_speech_silero": f.is_speech_silero,
                     "is_speech_ensemble": f.is_speech_ensemble,
                     "timestamp": f.timestamp
                 }
                 for f in self.frames[-5:] if self.frames
             ],
-            "audio_analysis": audio_debug
+            "audio_analysis": audio_debug,
+            "silero_vad": silero_stats
         }
 
 class SocketVADService:
