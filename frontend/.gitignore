@@ -1,0 +1,55 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files
+.env
+.env.*
+!.env.example
+credentials.json
+
+# Build directories
+/build
+/out
+/.next
+
+# Testing
+/coverage
+
+# Audio files
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.aac
+
+# Backend files (moved to parent repository)
+/backend/
+
+# Temporary files
+*.temp
+*.tmp
+.cache

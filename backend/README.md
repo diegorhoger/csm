@@ -1,6 +1,6 @@
-# CSM Backend API
+# Council Backend API
 
-A consolidated API backend for the CSM project with voice activity detection (VAD), OpenAI integration, and real-time communication features.
+A consolidated API backend for the Council project with voice activity detection (VAD), OpenAI integration, and real-time communication features.
 
 ## Features
 

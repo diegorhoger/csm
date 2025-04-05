@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    volumes:
+      - ../backend:/app
+      - ./.env:/app/.env
+      - models-volume:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+  
+  websocket-vad:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.vad
+    ports:
+      - "5003:5003"
+    volumes:
+      - ../backend:/app
+      - models-volume:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SILERO_MODEL_PATH=/app/models/silero_vad.onnx
+  
+  emotion-analysis:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.emotion
+    ports:
+      - "5004:5004"
+    volumes:
+      - ../backend:/app
+      - emotion-models:/app/models/emotion
+    environment:
+      - PYTHONUNBUFFERED=1
+      - EMOTION_MODEL_PATH=/app/models/emotion/distilbert
+  
+  supabase-local:
+    image: supabase/supabase-local
+    ports:
+      - "54321:54321"
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+
+volumes:
+  models-volume:
+  emotion-models:
+  supabase-data: 

@@ -1,30 +1,34 @@
-# CSM - Conversational Stoic Mentor
+# Council - Emotionally Intelligent AI Mentor
 
-A voice-powered AI mentor application that allows users to have philosophical conversations with famous Stoic philosophers through a natural speech interface.
+An emotionally intelligent, voice-first AI mentor designed to guide users through an inner journey of growth using real-time emotion recognition, stoic philosophy, and advanced conversational intelligence.
 
 ## Project Structure
 
-- `/backend`: The consolidated backend API with voice activity detection (VAD), OpenAI integration, and WebSocket communication
-- `/stoic-mentor`: The frontend application with React, Socket.IO, and audio processing capabilities
+- `/backend`: The backend API with voice activity detection (VAD), OpenAI integration, emotion analysis, and WebSocket communication
+- `/frontend`: The React application with UI components, Socket.IO integration, emotion tracking, and audio processing
+- `/docs`: Project documentation including architecture, planning, and ethical guidelines
 
 ## Features
 
+- **Emotion Intelligence**: Text-based emotion analysis with Hawkins Energy Scale mapping
+- **Dynamic Mentor Selection**: Chooses the appropriate mentor based on emotional state
 - **Voice-powered Interface**: Speak directly to AI mentors and hear their responses
-- **Real-time Voice Activity Detection**: Detects speech start and end using WebSocket-based VAD
+- **Real-time Voice Activity Detection**: Detects speech using advanced Silero VAD
 - **Multiple Stoic Philosophers**: Interact with Marcus Aurelius, Seneca, or Epictetus
-- **Natural Conversation Flow**: Smooth conversation with proper turn-taking
+- **Ethical Filtering**: Ensures responses align with the Council AI Constitution
 - **Secure API Integration**: All API keys are stored securely on the backend
-- **Streaming Responses**: Real-time streaming of AI responses for natural conversation
+- **Persistent Storage**: Conversation history and emotional journey tracking with Supabase
 
 ## Backend
 
 The backend is a Flask and Socket.IO-based API that provides:
 
-- Voice Activity Detection (VAD) via WebSockets
+- Advanced Voice Activity Detection (VAD) via WebSockets with Silero integration
 - OpenAI API integration for GPT models and transcription
+- Emotion analysis using pre-trained DistilBERT models
 - Secure API key storage and management
-- Real-time communication capabilities
-- Audio transcription services
+- Supabase database integration
+- Ethical filtering based on the Council AI Constitution
 
 ## Getting Started
 
@@ -45,64 +49,70 @@ pip install -r requirements.txt
 # Example:
 # OPENAI_API_KEY=your_api_key_here
 # DEBUG=true
-# CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:5001
+# CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+# SUPABASE_URL=your_supabase_url
+# SUPABASE_KEY=your_supabase_key
 
-# Run the backend
-python api.py --port 5001
+# Run the backend services
+python api.py --port 5002
+python socket_vad_service.py --port 5003
 ```
 
 ### Frontend Setup
 
 ```bash
 # Navigate to the frontend directory
-cd stoic-mentor
+cd frontend
 
 # Install dependencies
 npm install
 
-# Create .env file (optional, since we now use the backend for API calls)
-# Example:
-# VITE_BACKEND_URL=http://localhost:5001
+# Create .env file (if not already present)
+# Example content in frontend/DOCKER_README.md
 
 # Run the development server
 npm run dev
 ```
 
+## Docker Setup
+
+For a containerized setup with all services:
+
+```bash
+cd frontend
+docker-compose up --build
+```
+
+See [DOCKER_README.md](frontend/DOCKER_README.md) for detailed Docker instructions.
+
 ## How to Use
 
-1. Start the backend server on port 5001
-2. Start the frontend development server
-3. Open your browser to http://localhost:5173
-4. Select a Stoic mentor from the options
-5. Click the microphone button and start speaking
-6. The mentor will respond with philosophical guidance based on Stoic principles
+1. Start the backend services and frontend
+2. Open your browser to http://localhost:5173
+3. Begin a conversation with the AI mentor
+4. Your emotional state will be analyzed and tracked
+5. The most appropriate mentor will guide you based on your emotional state
+6. Your conversation history and emotional journey will be saved
 
-## Testing
+## Documentation
 
-You can test various API endpoints directly using the built-in test page:
+For detailed documentation, see the [docs](docs) directory:
 
-1. Start the backend server
-2. Visit http://localhost:5001/test in your browser
-3. Test the health endpoint, mentor API, Socket.IO connection, and audio transcription
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md): System architecture and component design
+- [PLAN.md](docs/PLAN.md): Implementation plan and roadmap
+- [PRD.md](docs/PRD.md): Product requirements and specifications
+- [Council AI Constitution V1.md](docs/Council%20AI%20Constitution%20V1.md): Ethical principles and guidelines
 
 ## Troubleshooting
 
-### WebSocket Connection Issues
+### Common Issues
 
-If you experience WebSocket connection problems:
+- **WebSocket Connection**: Ensure all backend services are running (API port 5002, VAD port 5003)
+- **Database Connection**: Check Supabase connection parameters
+- **Emotion Analysis**: Verify the emotion service is running properly
+- **Docker Issues**: See specific troubleshooting in [DOCKER_README.md](frontend/DOCKER_README.md)
 
-1. Check that the backend server is running on port 5001
-2. Ensure that CORS is properly configured on the backend
-3. Try using the test page to diagnose connection issues
-4. Look for any error messages in the browser console or backend logs
-
-### Audio Recording Issues
-
-If audio recording doesn't work:
-
-1. Ensure your browser has permission to access the microphone
-2. Check that the audio format is supported (WAV is preferred)
-3. Try testing audio recording using the test page
+For detailed debugging information, visit http://localhost:5002/debug
 
 ## License
 

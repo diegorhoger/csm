@@ -4,12 +4,12 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'stoic-mentor/**'
+      - 'frontend/**'
       - '.github/workflows/mobile.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'stoic-mentor/**'
+      - 'frontend/**'
       - '.github/workflows/mobile.yml'
   workflow_dispatch:  # Allow manual triggering
 
@@ -25,38 +25,38 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'stoic-mentor/package-lock.json'
+          cache-dependency-path: 'frontend/package-lock.json'
       
       - name: Install dependencies
         run: |
-          cd stoic-mentor
+          cd frontend
           npm ci
           npm install -g expo-cli eas-cli
       
       - name: Login to Expo
         run: |
-          cd stoic-mentor
+          cd frontend
           echo "${{ secrets.EXPO_TOKEN }}" | expo login --non-interactive
       
       - name: Lint
         run: |
-          cd stoic-mentor
+          cd frontend
           npm run lint
       
       - name: Build preview
         if: github.event_name == 'pull_request'
         run: |
-          cd stoic-mentor
+          cd frontend
           eas build --platform all --profile preview --non-interactive
       
       - name: Build production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          cd stoic-mentor
+          cd frontend
           eas build --platform all --profile production --non-interactive
       
       - name: Submit to stores
         if: github.event_name == 'workflow_dispatch'
         run: |
-          cd stoic-mentor
-          eas submit --platform all --latest 
+          cd frontend
+          eas submit --platform all --latest
